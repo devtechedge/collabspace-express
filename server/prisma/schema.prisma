@@ -1,0 +1,36 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+model Board {
+  id              String    @id @default(uuid())
+  name            String
+  backgroundColor String    @default("#0b0f17")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  elements        Element[]
+}
+
+model Element {
+  id          String   @id
+  boardId     String
+  type        String   // 'pencil' | 'line' | 'rectangle' | 'circle' | 'text'
+  x1          Float
+  y1          Float
+  x2          Float
+  y2          Float
+  points      String   // JSON stringified points array for freehand drawing
+  color       String
+  strokeWidth Int
+  strokeStyle String   @default("solid")
+  text        String?  // Optional text value for text elements
+  filled      Boolean  @default(false)
+  zIndex      Int      @default(0)
+  board       Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+}

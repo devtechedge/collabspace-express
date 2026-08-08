@@ -1,0 +1,442 @@
+/* ==========================================================
+   TOOLBAR — CSS custom-property driven, adapts to light/dark
+   ========================================================== */
+
+/* ── Wrapper (vertical, left-side floating panel) ── */
+.toolbar-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* ── Main vertical tool rail ── */
+.toolbar-container {
+  pointer-events: all;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 7px;
+  border-radius: 20px;
+  max-height: calc(100vh - 88px);
+  overflow-y: auto;
+  overflow-x: visible;
+  scrollbar-width: none;
+  transition: background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.toolbar-container::-webkit-scrollbar { display: none; }
+
+/* ── Light mode toolbar ── */
+.toolbar-light .toolbar-container {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.06),
+    0 8px 32px rgba(0,0,0,0.09),
+    0 0 0 1px rgba(99,102,241,0.06),
+    inset 0 1px 0 rgba(255,255,255,1);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+.toolbar-light .toolbar-container:hover {
+  box-shadow:
+    0 2px 8px rgba(0,0,0,0.08),
+    0 12px 40px rgba(0,0,0,0.12),
+    0 0 0 1px rgba(99,102,241,0.14),
+    inset 0 1px 0 rgba(255,255,255,1);
+}
+
+/* ── Dark mode toolbar ── */
+.toolbar-dark .toolbar-container {
+  background: rgba(10, 15, 28, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 0 0 1px rgba(99,102,241,0.08),
+    0 8px 40px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+.toolbar-dark .toolbar-container:hover {
+  box-shadow:
+    0 0 0 1px rgba(99,102,241,0.2),
+    0 12px 48px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+}
+
+/* ── Tool group — a visual cluster of related buttons ── */
+.toolbar-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+/* ── Dividers ── */
+.toolbar-divider {
+  width: 26px;
+  height: 1px !important;
+  margin: 4px 0 !important;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+.toolbar-light .toolbar-divider { background: rgba(0,0,0,0.07); }
+.toolbar-dark  .toolbar-divider { background: rgba(255,255,255,0.07); }
+
+/* ==========================================================
+   TOOL BUTTONS
+   ========================================================== */
+.tool-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  flex-shrink: 0;
+  outline: none;
+  background: transparent;
+}
+
+/* Light mode buttons */
+.toolbar-light .tool-btn {
+  color: #52525b;
+}
+.toolbar-light .tool-btn:hover {
+  background: rgba(99,102,241,0.07);
+  border-color: rgba(99,102,241,0.15);
+  color: #6366f1;
+  transform: scale(1.06);
+}
+.toolbar-light .tool-btn:active { transform: scale(0.95); }
+.toolbar-light .tool-btn.active {
+  background: rgba(99,102,241,0.12);
+  border-color: rgba(99,102,241,0.4);
+  color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+}
+.toolbar-light .tool-btn.active:hover {
+  background: rgba(99,102,241,0.18);
+}
+.toolbar-light .tool-btn.danger { color: #ef4444; }
+.toolbar-light .tool-btn.danger:hover {
+  background: rgba(239,68,68,0.08);
+  border-color: rgba(239,68,68,0.2);
+  color: #dc2626;
+  transform: scale(1.06);
+}
+
+/* Dark mode buttons */
+.toolbar-dark .tool-btn {
+  color: #94a3b8;
+}
+.toolbar-dark .tool-btn:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.1);
+  color: #f1f5f9;
+  transform: scale(1.06);
+}
+.toolbar-dark .tool-btn:active { transform: scale(0.95); }
+.toolbar-dark .tool-btn.active {
+  background: rgba(99,102,241,0.2);
+  border-color: rgba(99,102,241,0.45);
+  color: #a5b4fc;
+  box-shadow: 0 0 12px rgba(99,102,241,0.2), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.toolbar-dark .tool-btn.active:hover {
+  background: rgba(99,102,241,0.28);
+  border-color: rgba(99,102,241,0.6);
+  color: #c4b5fd;
+}
+.toolbar-dark .tool-btn.danger { color: #f87171; }
+.toolbar-dark .tool-btn.danger:hover {
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.3);
+  color: #fca5a5;
+  transform: scale(1.06);
+}
+
+/* Disabled */
+.tool-btn:disabled {
+  opacity: 0.28 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+/* ==========================================================
+   COLOR SWATCH PREVIEW (inside color button)
+   ========================================================== */
+.color-preview-swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  pointer-events: none;
+}
+.toolbar-light .color-preview-swatch { border: 1px solid rgba(0,0,0,0.15); }
+.toolbar-dark  .color-preview-swatch { border: 1px solid rgba(255,255,255,0.2); }
+
+/* ==========================================================
+   STROKE WIDTH BUTTONS
+   ========================================================== */
+.stroke-btn {
+  width: 36px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.toolbar-light .stroke-btn:hover {
+  background: rgba(99,102,241,0.07);
+  border-color: rgba(99,102,241,0.15);
+}
+.toolbar-light .stroke-btn.active {
+  background: rgba(99,102,241,0.12);
+  border-color: rgba(99,102,241,0.4);
+}
+.toolbar-dark .stroke-btn:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.1);
+}
+.toolbar-dark .stroke-btn.active {
+  background: rgba(99,102,241,0.18);
+  border-color: rgba(99,102,241,0.4);
+}
+
+.stroke-line {
+  border-radius: 99px;
+  width: 18px;
+  transition: background 0.15s;
+}
+.toolbar-light .stroke-line { background: #71717a; }
+.toolbar-light .stroke-btn:hover .stroke-line { background: #6366f1; }
+.toolbar-light .stroke-btn.active .stroke-line { background: #6366f1; }
+.toolbar-dark .stroke-line { background: #64748b; }
+.toolbar-dark .stroke-btn:hover .stroke-line { background: #e2e8f0; }
+.toolbar-dark .stroke-btn.active .stroke-line { background: #a5b4fc; }
+
+/* ==========================================================
+   TOOLBAR SECTION LABEL
+   ========================================================== */
+.toolbar-section-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.toolbar-light .toolbar-section-label { color: #a1a1aa; }
+.toolbar-dark  .toolbar-section-label { color: #475569; }
+
+/* ==========================================================
+   ERASER SIZE SLIDER
+   ========================================================== */
+.eraser-size-slider {
+  width: 70px;
+  accent-color: #6366f1;
+  flex-shrink: 0;
+  margin: 3px 0;
+}
+
+/* ==========================================================
+   BG COLOR PICKER
+   ========================================================== */
+.bg-color-picker {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+  border: none;
+}
+
+/* ==========================================================
+   COLOR / GRADIENT PANEL (slide-out)
+   ========================================================== */
+.color-menu-panel {
+  pointer-events: all;
+  width: 228px;
+  padding: 14px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: toolPanelIn 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes toolPanelIn {
+  from { opacity: 0; transform: translateX(-10px) scale(0.97); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* Light panel */
+.toolbar-light .color-menu-panel {
+  background: rgba(255,255,255,0.95);
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.06);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* Dark panel */
+.toolbar-dark .color-menu-panel {
+  background: rgba(10,15,28,0.92);
+  border: 1px solid rgba(255,255,255,0.09);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+/* Tabs */
+.menu-tabs {
+  display: flex;
+  border-radius: 9px;
+  padding: 2px;
+  gap: 2px;
+}
+.toolbar-light .menu-tabs { background: rgba(0,0,0,0.05); }
+.toolbar-dark  .menu-tabs { background: rgba(255,255,255,0.05); }
+
+.tab-btn {
+  flex: 1;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-sans);
+}
+.toolbar-light .tab-btn { background: transparent; color: #71717a; }
+.toolbar-light .tab-btn.active { background: #ffffff; color: #6366f1; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.toolbar-light .tab-btn:hover:not(.active) { color: #18181b; background: rgba(0,0,0,0.04); }
+
+.toolbar-dark .tab-btn { background: transparent; color: #64748b; }
+.toolbar-dark .tab-btn.active { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+.toolbar-dark .tab-btn:hover:not(.active) { color: #f1f5f9; background: rgba(255,255,255,0.06); }
+
+/* Tab content */
+.tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Palette sections */
+.palette-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.palette-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.toolbar-light .palette-title { color: #a1a1aa; }
+.toolbar-dark  .palette-title { color: #475569; }
+
+.palette-colors {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.color-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.toolbar-light .color-dot { border: 1.5px solid rgba(0,0,0,0.1); }
+.toolbar-dark  .color-dot { border: 1.5px solid rgba(255,255,255,0.1); }
+.color-dot:hover { transform: scale(1.18); }
+.color-dot.active { box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #6366f1; }
+
+.custom-solid-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.full-color-picker {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+}
+.hex-label {
+  font-size: 11px;
+  font-family: monospace;
+}
+.toolbar-light .hex-label { color: #71717a; }
+.toolbar-dark  .hex-label { color: #64748b; }
+
+/* Gradient builder */
+.gradient-builder { gap: 10px; }
+.gradient-preview {
+  height: 40px;
+  border-radius: 9px;
+}
+.toolbar-light .gradient-preview { border: 1px solid rgba(0,0,0,0.1); }
+.toolbar-dark  .gradient-preview { border: 1px solid rgba(255,255,255,0.1); }
+
+.gradient-inputs { display: flex; flex-direction: column; gap: 6px; }
+.grad-field { display: flex; flex-direction: column; gap: 3px; }
+.grad-field label { font-size: 10px; font-weight: 500; }
+.toolbar-light .grad-field label { color: #71717a; }
+.toolbar-dark  .grad-field label { color: #64748b; }
+
+.color-input-group { display: flex; align-items: center; gap: 6px; }
+.color-input-group input[type="color"] {
+  border: none;
+  background: transparent;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.color-input-group span { font-size: 11px; font-family: monospace; }
+.toolbar-light .color-input-group span { color: #a1a1aa; }
+.toolbar-dark  .color-input-group span { color: #475569; }
+
+.grad-field input[type="range"] { width: 100%; accent-color: #6366f1; }
+
+.apply-grad-btn {
+  background: linear-gradient(135deg, #6366f1, #0ea5e9);
+  color: white;
+  border: none;
+  border-radius: 9px;
+  padding: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-sans);
+  letter-spacing: 0.01em;
+}
+.apply-grad-btn:hover { opacity: 0.88; transform: translateY(-1px); }
