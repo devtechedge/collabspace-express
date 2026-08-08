@@ -13,6 +13,11 @@ out/
 /server/prisma/dev.db
 /server/prisma/dev.db-journal
 
+# Environment variables
+.env
+.env.local
+.env.production
+
 # IDEs and editors
 .idea/
 .vscode/
@@ -33,3 +38,8 @@ yarn-error.log*
 logs/
 *.log
 .system_generated/
+
+# Vercel
+.vercel/
+
+.vercel
