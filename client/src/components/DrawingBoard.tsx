@@ -136,8 +136,11 @@ export const DrawingBoard: React.FC<DrawingBoardProps> = ({
   onBackgroundColorChange,
   bringToFrontTrigger,
   sendToBackTrigger,
-  laserStyle,
+  laserStyle: _laserStyle,
   onSelectedElementExistsChange,
+  pendingImageSrc,
+  eraserSize,
+  onImagePlaced,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -192,7 +195,8 @@ const [editingText, setEditingText] = React.useState('');
     setLaserTrails([]);
     laserPointsRef.current = [];
 
-    const socket = io('http://localhost:5000');
+    const BACKEND_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+    const socket = io(BACKEND_URL);
     socketRef.current = socket;
 
     socket.emit('join-room', { boardId, userName });
@@ -780,7 +784,6 @@ const [editingText, setEditingText] = React.useState('');
     // Image placement
     if (tool === 'image' && pendingImageSrc) {
       const defaultW = 200; // default width
-      const aspectRatio = 1; // assume square if unknown
       const newEl: CanvasElement = {
         id: generateId(),
         type: 'image',

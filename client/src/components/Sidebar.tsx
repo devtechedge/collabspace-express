@@ -64,7 +64,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [renameValue, setRenameValue] = useState('');
   const renameInputRef = useRef<HTMLInputElement | null>(null);
 
-  const API_URL = 'http://localhost:5000/api/boards';
+  const BACKEND_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+  const API_URL = `${BACKEND_URL}/api/boards`;
 
   const fetchBoards = async () => {
     try {

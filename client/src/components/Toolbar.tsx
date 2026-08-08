@@ -128,7 +128,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     previewStyle = { backgroundColor: activeColor };
   }
 
-  const gridIcons: Record<GridStyle, string> = { dots: '⬝', lines: '≡', none: '□' };
   const gridLabels: Record<GridStyle, string> = { dots: 'Dots', lines: 'Lines', none: 'None' };
 
   const cycleGrid = () => {
