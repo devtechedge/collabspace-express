@@ -18,7 +18,7 @@ Real-time multiplayer whiteboard — infinite canvas, live cursors, and Prisma-b
 
 **https://collabspace-express.vercel.app**
 
-> **Status:** Vercel hosts the **Vite client only**. There is no public Express/Socket.io process on that URL — creating a room and live cursors need the Node backend from this repo. Clone and `npm run dev` for full multiplayer (two browser windows on the same room ID).
+> **Status:** Vercel hosts the **Vite client**. There is no public Express/Socket.io process on that URL. When the API is unreachable the client falls back to **localStorage boards** so the live demo is still drawable. Clone and `npm run dev` for real multiplayer (two browser windows on the same room ID).
 >
 > This is not a production auth or payment product. Identity is an anonymous display name in `localStorage`.
 
@@ -26,13 +26,14 @@ Real-time multiplayer whiteboard — infinite canvas, live cursors, and Prisma-b
 
 ## Screenshots
 
-| Dark canvas | Light canvas |
-|-------------|--------------|
-| ![Dark mode whiteboard with drawings](docs/screenshots/01-dark-canvas.png) | ![Light mode whiteboard with drawings](docs/screenshots/02-light-canvas.png) |
+### Dark canvas
+![Dark-mode whiteboard with drawings, sidebar and tool rail](docs/screenshots/01-dark-canvas.png)
 
-| Toolbar & rooms (dark) | Light rooms |
-|------------------------|-------------|
-| ![Dark UI with tool rail and a live room](docs/screenshots/03-toolbar-and-rooms.png) | ![Light UI after creating a board](docs/screenshots/04-light-rooms.png) |
+### Light canvas
+![Light-mode whiteboard with rooms and collaborators](docs/screenshots/02-light-canvas.png)
+
+### Empty board
+![Dark UI after load — sidebar, infinite canvas, start-drawing hint](docs/screenshots/03-toolbar.png)
 
 ---
 
