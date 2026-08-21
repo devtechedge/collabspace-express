@@ -3,22 +3,32 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { PrismaClient } from '@prisma/client';
+import {
+  corsOriginOption,
+  isValidBoardId,
+  isValidBoardName,
+  isValidColor,
+  isValidUsername,
+  normalizeBoardName,
+  sanitizeElement,
+} from './validation';
 
 const prisma = new PrismaClient();
 const app = express();
 const httpServer = createServer(app);
+const corsOrigin = corsOriginOption(process.env.CORS_ORIGIN);
+
 const io = new Server(httpServer, {
   cors: {
-    origin: '*', // In production, customize this to your client URL
+    origin: corsOrigin,
     methods: ['GET', 'POST'],
   },
 });
 
-app.use(cors());
-app.use(express.json());
+app.use(cors({ origin: corsOrigin }));
+app.use(express.json({ limit: '256kb' }));
 
-// Server health check
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({
     status: 'healthy',
     service: 'CollabSpace Backend API',
@@ -26,8 +36,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// API: Get all boards
-app.get('/api/boards', async (req, res) => {
+app.get('/api/boards', async (_req, res) => {
   try {
     const boards = await prisma.board.findMany({
       orderBy: { updatedAt: 'desc' },
@@ -39,15 +48,14 @@ app.get('/api/boards', async (req, res) => {
   }
 });
 
-// API: Create a board
 app.post('/api/boards', async (req, res) => {
   try {
     const { name } = req.body;
-    if (!name || typeof name !== 'string') {
-      return res.status(400).json({ error: 'Board name is required' });
+    if (!isValidBoardName(name)) {
+      return res.status(400).json({ error: 'Board name is required (1–80 characters)' });
     }
     const board = await prisma.board.create({
-      data: { name },
+      data: { name: normalizeBoardName(name) },
     });
     res.json(board);
   } catch (error) {
@@ -56,10 +64,12 @@ app.post('/api/boards', async (req, res) => {
   }
 });
 
-// API: Get single board details (with elements sorted by zIndex)
 app.get('/api/boards/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    if (!isValidBoardId(id)) {
+      return res.status(400).json({ error: 'Invalid board id' });
+    }
     const board = await prisma.board.findUnique({
       where: { id },
       include: {
@@ -78,14 +88,26 @@ app.get('/api/boards/:id', async (req, res) => {
   }
 });
 
-// API: Rename or customize styling of a board
 app.patch('/api/boards/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    if (!isValidBoardId(id)) {
+      return res.status(400).json({ error: 'Invalid board id' });
+    }
     const { name, backgroundColor } = req.body;
-    const updateData: any = {};
-    if (name !== undefined) updateData.name = name;
-    if (backgroundColor !== undefined) updateData.backgroundColor = backgroundColor;
+    const updateData: { name?: string; backgroundColor?: string } = {};
+    if (name !== undefined) {
+      if (!isValidBoardName(name)) {
+        return res.status(400).json({ error: 'Board name must be 1–80 characters' });
+      }
+      updateData.name = normalizeBoardName(name);
+    }
+    if (backgroundColor !== undefined) {
+      if (!isValidColor(backgroundColor)) {
+        return res.status(400).json({ error: 'Invalid background color' });
+      }
+      updateData.backgroundColor = backgroundColor;
+    }
 
     const board = await prisma.board.update({
       where: { id },
@@ -98,11 +120,12 @@ app.patch('/api/boards/:id', async (req, res) => {
   }
 });
 
-// API: Delete a board (and all its elements)
 app.delete('/api/boards/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    // Delete elements first (foreign key), then the board
+    if (!isValidBoardId(id)) {
+      return res.status(400).json({ error: 'Invalid board id' });
+    }
     await prisma.element.deleteMany({ where: { boardId: id } });
     await prisma.board.delete({ where: { id } });
     res.json({ success: true });
@@ -112,35 +135,42 @@ app.delete('/api/boards/:id', async (req, res) => {
   }
 });
 
-// Socket.io Real-time connection handlers
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
-  // Track client join room
-  socket.on('join-room', async ({ boardId, userName }) => {
-    socket.join(`room-${boardId}`);
-    console.log(`User ${userName || socket.id} joined room: room-${boardId}`);
+  socket.on('join-room', async (payload: unknown) => {
+    const body = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+    const boardId = body.boardId;
+    if (!isValidBoardId(boardId)) return;
+    const userName = isValidUsername(body.userName) ? body.userName.trim() : 'Anonymous';
 
-    // Send board elements history to the newly connected user (sorted by zIndex)
+    socket.join(`room-${boardId}`);
+    console.log(`User ${userName} joined room: room-${boardId}`);
+
     try {
-      const elements = await prisma.element.findMany({
-        where: { boardId },
-        orderBy: { zIndex: 'asc' },
+      const board = await prisma.board.findUnique({
+        where: { id: boardId },
+        include: { elements: { orderBy: { zIndex: 'asc' } } },
       });
-      socket.emit('canvas-history', elements);
+      socket.emit('canvas-history', {
+        elements: board?.elements ?? [],
+        backgroundColor: board?.backgroundColor,
+      });
     } catch (err) {
       console.error('Error loading room history:', err);
     }
   });
 
-  // Handle draw events (drawing/moving shapes)
-  socket.on('draw-element', async ({ boardId, element }) => {
-    // Broadcast shape changes to everyone else in the room immediately
+  socket.on('draw-element', async (payload: unknown) => {
+    const body = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+    const boardId = body.boardId;
+    if (!isValidBoardId(boardId)) return;
+    const element = sanitizeElement(body.element);
+    if (!element) return;
+
     socket.to(`room-${boardId}`).emit('element-update', element);
 
-    // Persist to the database in background
     try {
-      // Guard: skip if the board no longer exists (was deleted mid-session)
       const boardExists = await prisma.board.findUnique({ where: { id: boardId }, select: { id: true } });
       if (!boardExists) return;
 
@@ -177,7 +207,6 @@ io.on('connection', (socket) => {
         },
       });
 
-      // Update the board's updatedAt timestamp
       await prisma.board.update({
         where: { id: boardId },
         data: { updatedAt: new Date() },
@@ -187,21 +216,31 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Handle delete element event
-  socket.on('delete-element', async ({ boardId, elementId }) => {
+  socket.on('delete-element', async (payload: unknown) => {
+    const body = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+    const boardId = body.boardId;
+    const elementId = body.elementId;
+    if (!isValidBoardId(boardId) || !isNonEmptyElementId(elementId)) return;
+
     socket.to(`room-${boardId}`).emit('element-delete', elementId);
 
     try {
       await prisma.element.deleteMany({
-        where: { id: elementId },
+        where: { id: elementId, boardId },
       });
     } catch (err) {
       console.error('Error deleting element:', err);
     }
   });
 
-  // Handle cursor moves
-  socket.on('cursor-move', ({ boardId, userName, color, x, y }) => {
+  socket.on('cursor-move', (payload: unknown) => {
+    const body = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+    const boardId = body.boardId;
+    if (!isValidBoardId(boardId)) return;
+    const userName = isValidUsername(body.userName) ? body.userName.trim() : 'Anonymous';
+    const color = isValidColor(body.color) ? body.color : '#6366f1';
+    const x = typeof body.x === 'number' && Number.isFinite(body.x) ? body.x : 0;
+    const y = typeof body.y === 'number' && Number.isFinite(body.y) ? body.y : 0;
     socket.to(`room-${boardId}`).emit('cursor-update', {
       socketId: socket.id,
       userName,
@@ -211,28 +250,40 @@ io.on('connection', (socket) => {
     });
   });
 
-  // Handle laser movement events
-  socket.on('laser-move', ({ boardId, userName, color, points }) => {
+  socket.on('laser-move', (payload: unknown) => {
+    const body = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+    const boardId = body.boardId;
+    if (!isValidBoardId(boardId)) return;
+    if (!Array.isArray(body.points) || body.points.length > 400) return;
+    const userName = isValidUsername(body.userName) ? body.userName.trim() : 'Anonymous';
+    const color = isValidColor(body.color) ? body.color : '#ef4444';
     socket.to(`room-${boardId}`).emit('laser-update', {
       socketId: socket.id,
       userName,
       color,
-      points,
+      points: body.points,
     });
   });
 
-  // Handle board renaming socket broadcast
-  socket.on('rename-board', ({ boardId, name }) => {
-    socket.to(`room-${boardId}`).emit('board-renamed', { boardId, name });
+  socket.on('rename-board', (payload: unknown) => {
+    const body = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+    const boardId = body.boardId;
+    if (!isValidBoardId(boardId) || !isValidBoardName(body.name)) return;
+    socket.to(`room-${boardId}`).emit('board-renamed', { boardId, name: normalizeBoardName(body.name) });
   });
 
-  // Handle board background color changes
-  socket.on('update-board-bg', ({ boardId, backgroundColor }) => {
-    socket.to(`room-${boardId}`).emit('board-bg-updated', { boardId, backgroundColor });
+  socket.on('update-board-bg', (payload: unknown) => {
+    const body = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+    const boardId = body.boardId;
+    if (!isValidBoardId(boardId) || !isValidColor(body.backgroundColor)) return;
+    socket.to(`room-${boardId}`).emit('board-bg-updated', { boardId, backgroundColor: body.backgroundColor });
   });
 
-  // Handle board clear
-  socket.on('clear-board', async ({ boardId }) => {
+  socket.on('clear-board', async (payload: unknown) => {
+    const body = payload && typeof payload === 'object' ? (payload as Record<string, unknown>) : {};
+    const boardId = body.boardId;
+    if (!isValidBoardId(boardId)) return;
+
     socket.to(`room-${boardId}`).emit('canvas-cleared');
 
     try {
@@ -245,7 +296,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnecting', () => {
-    // Broadcast user leave to rooms they were in
     for (const room of socket.rooms) {
       if (room.startsWith('room-')) {
         socket.to(room).emit('user-left', socket.id);
@@ -257,6 +307,10 @@ io.on('connection', (socket) => {
     console.log(`User disconnected: ${socket.id}`);
   });
 });
+
+function isNonEmptyElementId(value: unknown): value is string {
+  return typeof value === 'string' && value.length >= 8 && value.length <= 80;
+}
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {

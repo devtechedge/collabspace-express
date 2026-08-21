@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import type { Socket } from 'socket.io-client';
 import type { Tool, CanvasElement, Cursor, Point, GridStyle, LaserTrail } from '../types';
+import { getBackendUrl, upsertById } from '../lib/validation';
 import './DrawingBoard.css';
 
 // Props interface for DrawingBoard
@@ -195,7 +196,7 @@ const [editingText, setEditingText] = React.useState('');
     setLaserTrails([]);
     laserPointsRef.current = [];
 
-    const BACKEND_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+    const BACKEND_URL = getBackendUrl(import.meta.env.VITE_API_URL as string | undefined);
     const socket = io(BACKEND_URL);
     socketRef.current = socket;
 
@@ -212,15 +213,7 @@ const [editingText, setEditingText] = React.useState('');
     });
 
     socket.on('element-update', (element: CanvasElement) => {
-      setElements((prev) => {
-        const index = prev.findIndex((el) => el.id === element.id);
-        if (index > -1) {
-          const updated = [...prev];
-          updated[index] = element;
-          return updated;
-        }
-        return [...prev, element];
-      });
+      setElements((prev) => upsertById(prev, element));
     });
 
     socket.on('element-delete', (elementId: string) => {
@@ -378,7 +371,7 @@ const [editingText, setEditingText] = React.useState('');
     
     // Fetch initial background color from API
     if (boardId) {
-      fetch(`http://localhost:5000/api/boards/${boardId}`)
+      fetch(`${getBackendUrl(import.meta.env.VITE_API_URL as string | undefined)}/api/boards/${boardId}`)
         .then(res => res.json())
         .then(data => {
           if (data && data.backgroundColor) {
@@ -1224,11 +1217,12 @@ const [editingText, setEditingText] = React.useState('');
   };
 
   return (
-    <div className="drawing-board-container">
+    <div className="drawing-board-container" data-testid="drawing-board">
       {boardId ? (
         <>
           <canvas
               ref={canvasRef}
+              data-testid="drawing-canvas"
               className={`canvas-element ${tool === 'select' ? 'select-tool' : ''} ${action === 'panning' ? 'pan-tool' : ''} ${tool === 'laser' ? 'laser-tool' : ''}`}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
