@@ -28,7 +28,11 @@ Real-time multiplayer whiteboard — infinite canvas, live cursors, and Prisma-b
 
 | Dark canvas | Light canvas |
 |-------------|--------------|
-| ![Dark mode whiteboard with toolbar and sidebar](docs/screenshots/01-dark-canvas.png) | ![Light mode whiteboard with rooms and collaborators](docs/screenshots/02-light-canvas.png) |
+| ![Dark mode whiteboard with drawings](docs/screenshots/01-dark-canvas.png) | ![Light mode whiteboard with drawings](docs/screenshots/02-light-canvas.png) |
+
+| Toolbar & rooms (dark) | Light rooms |
+|------------------------|-------------|
+| ![Dark UI with tool rail and a live room](docs/screenshots/03-toolbar-and-rooms.png) | ![Light UI after creating a board](docs/screenshots/04-light-rooms.png) |
 
 ---
 
@@ -93,6 +97,35 @@ server/                 Express + Socket.io + Prisma
 ```
 
 Prisma is the local production path, not leftover template. The public Vercel alias does not run this server.
+
+---
+
+## Quality
+
+| Check | How |
+|-------|-----|
+| Unit | Allow-lists, payload sanitizer, board-name rules, element upsert (`npm test`) |
+| Types | `npm run typecheck` — server `tsc --noEmit`, client `tsc -b` |
+| E2E | Playwright Chromium: shell, create board, pencil tool, theme toggle |
+| CI | GitHub Actions — install → Prisma generate → unit → typecheck → e2e |
+| Supply chain | Unused Testing Library removed; Dependabot weekly (patch/minor only — do not merge majors blindly) |
+
+```bash
+npm test
+npm run typecheck
+npx playwright install chromium
+npm run test:e2e
+```
+
+---
+
+## Security
+
+Portfolio demo: **no login**. Vercel cannot reach other users' boards.
+
+The local Express engine allow-lists element types, clamps strokes, caps payload size, and reads `CORS_ORIGIN`. **Do not bind port 5000 to the internet** without auth and a locked origin.
+
+Details: **[SECURITY.md](SECURITY.md)**.
 
 ---
 

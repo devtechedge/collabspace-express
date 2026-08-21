@@ -7,7 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] — 2026-08-21
+
+Presentation pass plus engineering hardening. Prisma is **kept** (schema + migrations + SQLite) as the local production path.
+
+### Added
+- Root `SECURITY.md` threat model (anonymous identity, open rooms, CORS default)
+- Unit tests for board/element allow-lists (`vitest` on the client, `node:test` on the server)
+- Playwright Chromium smokes: shell, create board, pencil, theme
+- GitHub Actions CI: `npm ci` → Prisma generate → unit → typecheck → e2e (Node 22)
+- Dependabot weekly npm + Actions, patch/minor only (majors ignored)
+- Offline localStorage boards when the Express API is unreachable (Vercel client demo)
+- `data-testid`s on sidebar, toolbar, and canvas for e2e
+
+### Changed
+- Hiring-manager README; honest “Vercel is the client only” status
+- Socket `canvas-history` now emits `{ elements, backgroundColor }` (matches the client)
+- REST + Socket payloads validated and size-capped
+- CORS reads `CORS_ORIGIN` instead of a hardcoded `*`
+- Board fetch uses `VITE_API_URL` (no more hardcoded `localhost:5000`)
+- Document icon points at `public/favicon.svg`
+
+### Removed
+- Root PowerShell session scripts (OAuth/PAT/prisma init leftovers)
+- Unused `@testing-library/*` + `jsdom` (unit tests are pure helpers)
+
+---
+
 ## [1.0.0] — 2026-08-08
+
 
 ### 🎉 Initial Release
 
