@@ -1,4 +1,4 @@
-# Dependency directories
+# Dependencies
 node_modules/
 jspm_packages/
 
@@ -8,15 +8,18 @@ build/
 .svelte-kit/
 .next/
 out/
+*.tsbuildinfo
 
 # Database files
 /server/prisma/dev.db
 /server/prisma/dev.db-journal
+*.db
+*.db-journal
 
 # Environment variables
 .env
-.env.local
-.env.production
+.env.*
+!.env.example
 
 # IDEs and editors
 .idea/
@@ -39,7 +42,11 @@ logs/
 *.log
 .system_generated/
 
+# Test / CI artifacts
+coverage/
+playwright-report/
+test-results/
+blob-report/
+
 # Vercel
 .vercel/
-
-.vercel
