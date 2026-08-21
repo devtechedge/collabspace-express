@@ -1,6 +1,6 @@
 {
   "name": "collabspace-express",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "workspaces": [
     "client",
@@ -10,9 +10,15 @@
     "dev:client": "npm run dev --workspace=client",
     "dev:server": "npm run dev --workspace=server",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build": "npm run build --workspace=server && npm run build --workspace=client",
+    "test": "npm run test --workspace=client && npm run test --workspace=server",
+    "typecheck": "npm run typecheck --workspace=client && npm run typecheck --workspace=server",
+    "test:e2e": "playwright test",
+    "prisma:generate": "npm run prisma:generate --workspace=server",
     "install:all": "npm install"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "concurrently": "^8.2.2"
   }
 }
