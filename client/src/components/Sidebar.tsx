@@ -4,6 +4,7 @@ import {
   Plus, Users, Copy, Check, Hash, Trash2, Pencil,
   Sun, Moon, LogIn, Shield,
 } from 'lucide-react';
+import { getBackendUrl, isValidBoardId, isValidBoardName, normalizeBoardName } from '../lib/validation';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -16,33 +17,58 @@ interface SidebarProps {
   onToggleTheme: () => void;
 }
 
-// ── Join-by-ID form (sub-component) ──────────────────────
+const LOCAL_BOARDS_KEY = 'collabspace_local_boards';
+
+function readLocalBoards(): Board[] {
+  try {
+    const raw = localStorage.getItem(LOCAL_BOARDS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Board[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalBoards(boards: Board[]) {
+  localStorage.setItem(LOCAL_BOARDS_KEY, JSON.stringify(boards));
+}
+
 const JoinByIdForm: React.FC<{ onSelectBoard: (id: string) => void }> = ({ onSelectBoard }) => {
   const [joinId, setJoinId] = useState('');
+  const [joinError, setJoinError] = useState('');
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = joinId.trim();
-    if (!trimmed) return;
+    if (!isValidBoardId(trimmed)) {
+      setJoinError('Room IDs are 8–80 letters, numbers, _ or -.');
+      return;
+    }
     onSelectBoard(trimmed);
     setJoinId('');
+    setJoinError('');
   };
   return (
-    <form onSubmit={handleJoin} className="create-board-form">
+    <form onSubmit={handleJoin} className="create-board-form" data-testid="join-room-form">
       <input
         type="text"
         className="input-field"
         placeholder="Paste Room ID…"
         value={joinId}
-        onChange={(e) => setJoinId(e.target.value)}
+        onChange={(e) => {
+          setJoinId(e.target.value);
+          if (joinError) setJoinError('');
+        }}
+        data-testid="join-room-input"
       />
-      <button type="submit" className="btn-secondary" style={{ justifyContent: 'center' }}>
+      {joinError && <span className="error-text">{joinError}</span>}
+      <button type="submit" className="btn-secondary" style={{ justifyContent: 'center' }} data-testid="join-room-submit">
         <LogIn size={14} /> Join Room
       </button>
     </form>
   );
 };
 
-// ── Main Sidebar ─────────────────────────────────────────
 export const Sidebar: React.FC<SidebarProps> = ({
   currentBoardId,
   onSelectBoard,
@@ -62,18 +88,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
+  const [offline, setOffline] = useState(false);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
 
-  const BACKEND_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
+  const BACKEND_URL = getBackendUrl(import.meta.env.VITE_API_URL as string | undefined);
   const API_URL = `${BACKEND_URL}/api/boards`;
 
   const fetchBoards = async () => {
     try {
       const res = await fetch(API_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
+      if (!Array.isArray(data)) throw new Error('unexpected payload');
       setBoards(data);
+      setOffline(false);
     } catch (err) {
       console.error('Error fetching boards:', err);
+      setOffline(true);
+      setBoards(readLocalBoards());
     }
   };
 
@@ -86,22 +118,45 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleCreateBoard = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmed = newBoardName.trim();
-    if (!trimmed) { setCreateError('Enter a board name first.'); return; }
+    if (!isValidBoardName(trimmed)) {
+      setCreateError('Enter a board name (1–80 characters).');
+      return;
+    }
     setCreateError('');
     setIsCreating(true);
+    const name = normalizeBoardName(trimmed);
+
+    if (offline) {
+      const board: Board = {
+        id: crypto.randomUUID(),
+        name,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const next = [board, ...readLocalBoards()];
+      writeLocalBoards(next);
+      setBoards(next);
+      setNewBoardName('');
+      onSelectBoard(board.id);
+      setIsCreating(false);
+      return;
+    }
+
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: trimmed }),
+        body: JSON.stringify({ name }),
       });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setNewBoardName('');
       fetchBoards();
-      onSelectBoard(data.id);
+      if (data?.id) onSelectBoard(data.id);
     } catch (err) {
       console.error('Error creating board:', err);
       setCreateError('Failed to create. Is the server running?');
+      setOffline(true);
     } finally {
       setIsCreating(false);
     }
@@ -110,6 +165,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const handleDeleteBoard = async (boardId: string) => {
     setDeletingId(boardId);
     setDeleteError(null);
+
+    if (offline) {
+      const next = readLocalBoards().filter((b) => b.id !== boardId);
+      writeLocalBoards(next);
+      setBoards(next);
+      setConfirmDeleteId(null);
+      setDeletingId(null);
+      if (currentBoardId === boardId) {
+        window.history.pushState({}, '', '/');
+        window.location.reload();
+      }
+      return;
+    }
+
     try {
       const res = await fetch(`${API_URL}/${boardId}`, { method: 'DELETE' });
       if (!res.ok) throw new Error(`Server error: ${res.status}`);
@@ -137,14 +206,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const handleRenameSubmit = async (boardId: string) => {
     const trimmed = renameValue.trim();
-    if (!trimmed || !renamingId) { setRenamingId(null); return; }
+    if (!isValidBoardName(trimmed) || !renamingId) { setRenamingId(null); return; }
+    const name = normalizeBoardName(trimmed);
+
+    if (offline) {
+      const next = readLocalBoards().map((b) => (b.id === boardId ? { ...b, name } : b));
+      writeLocalBoards(next);
+      setBoards(next);
+      setRenamingId(null);
+      return;
+    }
+
     try {
       await fetch(`${API_URL}/${boardId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: trimmed }),
+        body: JSON.stringify({ name }),
       });
-      setBoards((prev) => prev.map((b) => (b.id === boardId ? { ...b, name: trimmed } : b)));
+      setBoards((prev) => prev.map((b) => (b.id === boardId ? { ...b, name } : b)));
     } catch (err) {
       console.error('Error renaming board:', err);
     }
@@ -167,8 +246,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const getInitial = (name: string) => (name || 'A').charAt(0).toUpperCase();
 
   return (
-    <aside className="sidebar">
-      {/* ── Header ── */}
+    <aside className="sidebar" data-testid="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-brand">
           <div className="sidebar-logo-icon">
@@ -182,16 +260,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={onToggleTheme}
             title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
             aria-label="Toggle theme"
+            data-testid="theme-toggle"
           >
             {isDark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
         </div>
       </div>
 
-      {/* ── Scrollable content ── */}
       <div className="sidebar-content">
-
-        {/* Profile */}
         <div className="sidebar-section">
           <div className="section-title">Your Profile</div>
           <div className="profile-card">
@@ -205,23 +281,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
               value={userName}
               onChange={(e) => onUserNameChange(e.target.value)}
               maxLength={32}
+              data-testid="username-input"
             />
           </div>
         </div>
 
+        {offline && (
+          <div className="sidebar-section" data-testid="offline-banner">
+            <span className="error-text">
+              Backend unreachable — boards in this browser only. Run the Express server for live multiplayer.
+            </span>
+          </div>
+        )}
+
         <div className="section-divider" />
 
-        {/* Current Room Code */}
         {currentBoardId && (
           <>
             <div className="sidebar-section">
               <div className="section-title">Room Code</div>
               <div className="room-code-card">
-                <span className="room-code-text">{currentBoardId}</span>
+                <span className="room-code-text" data-testid="room-code">{currentBoardId}</span>
                 <button
                   className={`icon-btn ${copied ? 'copied' : ''}`}
                   onClick={copyRoomId}
                   title="Copy Room ID"
+                  data-testid="copy-room-id"
                 >
                   {copied ? <Check size={13} /> : <Copy size={13} />}
                 </button>
@@ -231,13 +316,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </>
         )}
 
-        {/* Collaborators */}
         <div className="sidebar-section">
           <div className="section-title">
             <Users size={11} />
             Collaborators ({activeUsers.length})
           </div>
-          <div className="collab-list">
+          <div className="collab-list" data-testid="collaborators">
             {activeUsers.map((user) => (
               <div key={user.socketId} className="user-badge">
                 <span className="user-avatar" style={{ backgroundColor: user.color }}>
@@ -259,10 +343,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <div className="section-divider" />
 
-        {/* Create Board */}
         <div className="sidebar-section">
           <div className="section-title">New Board</div>
-          <form onSubmit={handleCreateBoard} className="create-board-form">
+          <form onSubmit={handleCreateBoard} className="create-board-form" data-testid="create-board-form">
             <input
               type="text"
               className="input-field"
@@ -273,6 +356,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 if (createError) setCreateError('');
               }}
               style={createError ? { borderColor: '#ef4444' } : {}}
+              data-testid="create-board-input"
             />
             {createError && <span className="error-text">{createError}</span>}
             <button
@@ -280,6 +364,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="btn-primary"
               disabled={isCreating}
               style={{ justifyContent: 'center' }}
+              data-testid="create-board-submit"
             >
               <Plus size={15} />
               {isCreating ? 'Creating…' : 'Create Board'}
@@ -287,7 +372,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </form>
         </div>
 
-        {/* Join by Room ID */}
         <div className="sidebar-section">
           <div className="section-title">Join by ID</div>
           <JoinByIdForm onSelectBoard={onSelectBoard} />
@@ -295,18 +379,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <div className="section-divider" />
 
-        {/* Boards & Rooms list */}
         <div className="sidebar-section">
           <div className="section-title">
             <Hash size={11} />
             Boards & Rooms
           </div>
-          <div className="board-list">
+          <div className="board-list" data-testid="board-list">
             {boards.map((board) => (
               <div
                 key={board.id}
                 className={`board-item ${currentBoardId === board.id ? 'active' : ''}`}
                 onClick={() => onSelectBoard(board.id)}
+                data-testid={`board-item-${board.id}`}
               >
                 <Hash size={13} className="board-hash-icon" />
                 <div className="board-info">
@@ -332,56 +416,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   )}
                 </div>
 
-                {/* Live dot + action buttons */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
                   {currentBoardId === board.id && <div className="live-indicator" />}
                   {confirmDeleteId === board.id ? (
                     <div className="board-confirm-row">
-                      <span>Delete?</span>
                       <button
-                        className="confirm-yes-btn"
-                        disabled={deletingId === board.id}
+                        className="icon-btn"
+                        title="Confirm delete"
                         onClick={(e) => { e.stopPropagation(); handleDeleteBoard(board.id); }}
+                        disabled={deletingId === board.id}
                       >
-                        {deletingId === board.id ? '…' : 'Yes'}
+                        <Check size={13} />
                       </button>
                       <button
-                        className="confirm-no-btn"
+                        className="icon-btn"
+                        title="Cancel"
                         onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}
                       >
-                        No
+                        <Trash2 size={13} />
                       </button>
                     </div>
                   ) : (
-                    <div className="board-actions">
+                    <>
                       <button
-                        className="board-delete-btn"
+                        className="icon-btn"
+                        title="Rename"
                         onClick={(e) => handleRenameStart(board, e)}
-                        title={`Rename "${board.name}"`}
                       >
-                        <Pencil size={11} />
+                        <Pencil size={13} />
                       </button>
                       <button
-                        className="board-delete-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setConfirmDeleteId(board.id);
-                          setDeleteError(null);
-                        }}
-                        title={`Delete "${board.name}"`}
-                        style={{ color: 'var(--text-muted)' }}
+                        className="icon-btn"
+                        title="Delete"
+                        onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(board.id); setDeleteError(null); }}
                       >
-                        <Trash2 size={12} />
+                        <Trash2 size={13} />
                       </button>
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
             ))}
             {boards.length === 0 && (
-              <div className="empty-boards-msg">No boards yet. Create one above!</div>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '4px 0' }}>
+                No boards yet — create one above.
+              </span>
             )}
-            {deleteError && <div className="delete-error-msg">{deleteError}</div>}
+            {deleteError && <span className="error-text">{deleteError}</span>}
           </div>
         </div>
       </div>

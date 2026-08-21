@@ -94,6 +94,7 @@ const App: React.FC = () => {
 
   return (
     <div
+      data-testid="app-shell"
       style={{
         display: 'flex',
         width: '100vw',

@@ -136,7 +136,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   return (
-    <div className={`toolbar-wrapper ${isDark ? 'toolbar-dark' : 'toolbar-light'}`}>
+    <div className={`toolbar-wrapper ${isDark ? 'toolbar-dark' : 'toolbar-light'}`} data-testid="toolbar">
       {/* ── Main vertical tool rail ── */}
       <div className="toolbar-container">
 
@@ -146,6 +146,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             <button
               key={tool}
               id={`tool-${tool}`}
+              data-testid={`tool-${tool}`}
               className={`tool-btn ${activeTool === tool ? 'active' : ''}`}
               onClick={() => {
                 if (tool === 'image') { fileInputRef.current?.click(); return; }
@@ -161,6 +162,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           {/* Image upload trigger */}
           <button
             id="tool-image"
+            data-testid="tool-image"
             className={`tool-btn ${activeTool === 'image' ? 'active' : ''}`}
             onClick={() => fileInputRef.current?.click()}
             title="Upload Image (I)"
@@ -280,6 +282,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <div className="toolbar-group">
           <button
             id="btn-undo"
+            data-testid="btn-undo"
             className="tool-btn"
             onClick={onUndo}
             disabled={!canUndo}
@@ -289,6 +292,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </button>
           <button
             id="btn-redo"
+            data-testid="btn-redo"
             className="tool-btn"
             onClick={onRedo}
             disabled={!canRedo}
@@ -342,12 +346,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </button>
 
           {/* Export */}
-          <button id="btn-export" className="tool-btn" onClick={onExportImage} title="Export PNG">
+          <button id="btn-export" data-testid="btn-export" className="tool-btn" onClick={onExportImage} title="Export PNG">
             <Download size={16} />
           </button>
 
           {/* Clear board */}
-          <button id="btn-clear" className="tool-btn danger" onClick={onClearBoard} title="Clear Board">
+          <button id="btn-clear" data-testid="btn-clear" className="tool-btn danger" onClick={onClearBoard} title="Clear Board">
             <Trash2 size={16} />
           </button>
         </div>
