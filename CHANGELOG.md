@@ -21,7 +21,7 @@ Presentation pass plus engineering hardening. Prisma is **kept** (schema + migra
 - `data-testid`s on sidebar, toolbar, and canvas for e2e
 
 ### Changed
-- Hiring-manager README; honest “Vercel is the client only” status
+- Product README; honest “Vercel is the client only” status
 - Socket `canvas-history` now emits `{ elements, backgroundColor }` (matches the client)
 - REST + Socket payloads validated and size-capped
 - CORS reads `CORS_ORIGIN` instead of a hardcoded `*`
