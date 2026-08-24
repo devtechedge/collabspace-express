@@ -26,6 +26,10 @@ Real-time multiplayer whiteboard — infinite canvas, live cursors, and Prisma-b
 
 ## Screenshots
 
+<p align="center">
+  <img src="docs/social-preview.jpg" alt="CollabSpace" width="800">
+</p>
+
 ### Dark canvas
 ![Dark-mode whiteboard with drawings, sidebar and tool rail](docs/screenshots/01-dark-canvas.png)
 
