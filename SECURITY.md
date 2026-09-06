@@ -1,6 +1,6 @@
 # Security Assessment — CollabSpace Express
 
-**Date:** 2026-08-21  
+**Date:** 2026-09-06  
 **Scope:** Auth, XSS, injection, CORS, Socket.io, secrets, persistence  
 **Context:** Public deploy is the **Vite client on Vercel**. Express + Socket.io + Prisma/SQLite is the **local production path**, not exposed on the live alias.
 
@@ -125,3 +125,11 @@ npx playwright install chromium
 npm run test:e2e
 npm audit --omit=dev
 ```
+
+## Repository visibility
+
+This repository is currently **public** for portfolio review. When the open-source
+build story is no longer needed, **the GitHub repo will go private**. Making the
+repo private reduces source disclosure; it does **not** replace strong production
+secrets, auth allow-lists, webhook signatures, or Vercel/Actions environment
+hygiene. Rotate any credential that was pasted into chat, tickets, or screenshots.
