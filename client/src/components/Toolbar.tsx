@@ -209,7 +209,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </>
         )}
 
-        {/* Shape options — Fill (Rectangle & Circle only) */}
+        {/* Shape options - Fill (Rectangle & Circle only) */}
         {(activeTool === 'rectangle' || activeTool === 'circle') && (
           <>
             <div className="toolbar-group">

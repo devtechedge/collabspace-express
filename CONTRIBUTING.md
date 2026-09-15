@@ -87,7 +87,7 @@ Example: `feat: add sticky note tool with inline editing`
 
 1. Ensure your branch is up to date with `main`
 2. Make sure `tsc --noEmit` passes with no errors
-3. Keep PRs focused — one feature or fix per PR
+3. Keep PRs focused - one feature or fix per PR
 4. Fill out the PR template completely
 5. A maintainer will review and merge
 

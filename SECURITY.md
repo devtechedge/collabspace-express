@@ -1,4 +1,4 @@
-# Security Assessment — CollabSpace Express
+# Security Assessment - CollabSpace Express
 
 **Date:** 2026-09-06  
 **Scope:** Auth, XSS, injection, CORS, Socket.io, secrets, persistence  
@@ -14,14 +14,14 @@
 | Authorization | **High if the engine is public** | Any Socket.io client that knows a board UUID can draw, delete, or clear it. |
 | XSS | **Low** | No `dangerouslySetInnerHTML`. React text escaping for names and board titles. |
 | Injection (SQL) | **Low locally** | Prisma parameterized queries. REST/socket payloads are allow-listed. |
-| CORS | **Medium (local engine)** | `CORS_ORIGIN` env, default `*` for local DX — unsafe for a public bind. |
+| CORS | **Medium (local engine)** | `CORS_ORIGIN` env, default `*` for local DX - unsafe for a public bind. |
 | Secrets in repo | **Low** | `.env` gitignored; `.env.example` has no credentials. Session PowerShell junk removed. |
 | Rate limiting | **None** | Accepted residual risk for the portfolio demo. |
 | Payments | **N/A** | No payments, no PII store. |
 
-**Overall (public Vercel demo):** Low residual risk — static client, no backend secrets, no auth boundary to break. Offline boards stay in `localStorage`.
+**Overall (public Vercel demo):** Low residual risk - static client, no backend secrets, no auth boundary to break. Offline boards stay in `localStorage`.
 
-**Overall (if Express is bound to the internet):** High — unauthenticated Socket.io mutations on any room id.
+**Overall (if Express is bound to the internet):** High - unauthenticated Socket.io mutations on any room id.
 
 ---
 
@@ -79,7 +79,7 @@ SQL stays on the Prisma client. Do not interpolate user input into raw SQL if th
 ## 6. Secrets & config
 
 - `.gitignore` excludes `.env`, `*.db`, Playwright reports, coverage.
-- `.env.example` documents `PORT`, `CORS_ORIGIN`, `VITE_API_URL` — no live secrets.
+- `.env.example` documents `PORT`, `CORS_ORIGIN`, `VITE_API_URL` - no live secrets.
 - Root PowerShell PAT/OAuth helpers were deleted; they read `GITHUB_PERSONAL_ACCESS_TOKEN` from the environment and never committed a token.
 
 ---

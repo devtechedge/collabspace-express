@@ -289,7 +289,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {offline && (
           <div className="sidebar-section" data-testid="offline-banner">
             <span className="error-text">
-              Backend unreachable — boards in this browser only. Run the Express server for live multiplayer.
+              Backend unreachable - boards in this browser only. Run the Express server for live multiplayer.
             </span>
           </div>
         )}
@@ -459,7 +459,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             ))}
             {boards.length === 0 && (
               <span style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '4px 0' }}>
-                No boards yet — create one above.
+                No boards yet - create one above.
               </span>
             )}
             {deleteError && <span className="error-text">{deleteError}</span>}

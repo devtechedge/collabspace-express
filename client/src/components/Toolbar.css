@@ -1,5 +1,5 @@
 /* ==========================================================
-   TOOLBAR — CSS custom-property driven, adapts to light/dark
+   TOOLBAR - CSS custom-property driven, adapts to light/dark
    ========================================================== */
 
 /* ── Wrapper (vertical, left-side floating panel) ── */
@@ -71,7 +71,7 @@
     inset 0 1px 0 rgba(255,255,255,0.07);
 }
 
-/* ── Tool group — a visual cluster of related buttons ── */
+/* ── Tool group - a visual cluster of related buttons ── */
 .toolbar-group {
   display: flex;
   flex-direction: column;

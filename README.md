@@ -1,6 +1,6 @@
 # CollabSpace Express
 
-Real-time multiplayer whiteboard — infinite canvas, live cursors, and Prisma-backed rooms.
+Real-time multiplayer whiteboard - infinite canvas, live cursors, and Prisma-backed rooms.
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black?logo=vercel)](https://collabspace-express.vercel.app)
 [![CI](https://github.com/devtechedge/collabspace-express/actions/workflows/ci.yml/badge.svg)](https://github.com/devtechedge/collabspace-express/actions/workflows/ci.yml)
@@ -37,18 +37,18 @@ Real-time multiplayer whiteboard — infinite canvas, live cursors, and Prisma-b
 ![Light-mode whiteboard with rooms and collaborators](docs/screenshots/02-light-canvas.png)
 
 ### Empty board
-![Dark UI after load — sidebar, infinite canvas, start-drawing hint](docs/screenshots/03-toolbar.png)
+![Dark UI after load - sidebar, infinite canvas, start-drawing hint](docs/screenshots/03-toolbar.png)
 
 ---
 
 ## Features
 
-- **11 drawing tools** — pencil, highlighter, line, rectangle, circle, text, sticky note, eraser, select, image, laser pointer
-- **Live collaboration** — Socket.io rooms, color-coded cursors, laser trails, presence list
-- **Infinite canvas** — scroll zoom, Shift-drag / middle-click pan, grid overlay
-- **Undo / redo** — local history, broadcast to peers
-- **Shareable rooms** — UUID in the URL (`?room=`), join-by-ID in the sidebar
-- **Persistence** — boards and elements in SQLite via Prisma (local backend)
+- **11 drawing tools** - pencil, highlighter, line, rectangle, circle, text, sticky note, eraser, select, image, laser pointer
+- **Live collaboration** - Socket.io rooms, color-coded cursors, laser trails, presence list
+- **Infinite canvas** - scroll zoom, Shift-drag / middle-click pan, grid overlay
+- **Undo / redo** - local history, broadcast to peers
+- **Shareable rooms** - UUID in the URL (`?room=`), join-by-ID in the sidebar
+- **Persistence** - boards and elements in SQLite via Prisma (local backend)
 - **PNG export**, dark / light theme, keyboard shortcuts (`V` `P` `E` `L` `R` `O` `T`)
 
 ---
@@ -86,7 +86,7 @@ npm run dev
 | Client | http://localhost:5173 |
 | API + WebSocket | http://localhost:5000 |
 
-Open two windows, create a board, paste the room ID in the second — strokes sync live.
+Open two windows, create a board, paste the room ID in the second - strokes sync live.
 
 ---
 
@@ -110,10 +110,10 @@ Prisma is the local production path, not leftover template. The public Vercel al
 | Check | How |
 |-------|-----|
 | Unit | Allow-lists, payload sanitizer, board-name rules, element upsert (`npm test`) |
-| Types | `npm run typecheck` — server `tsc --noEmit`, client `tsc -b` |
+| Types | `npm run typecheck` - server `tsc --noEmit`, client `tsc -b` |
 | E2E | Playwright Chromium: shell, create board, pencil tool, theme toggle |
-| CI | GitHub Actions — install → Prisma generate → unit → typecheck → e2e |
-| Supply chain | Unused Testing Library removed; Dependabot weekly (patch/minor only — do not merge majors blindly) |
+| CI | GitHub Actions - install → Prisma generate → unit → typecheck → e2e |
+| Supply chain | Unused Testing Library removed; Dependabot weekly (patch/minor only - do not merge majors blindly) |
 
 ```bash
 npm test

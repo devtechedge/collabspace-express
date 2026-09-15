@@ -336,7 +336,7 @@ const [editingText, setEditingText] = React.useState('');
     }
   }, [sendToBackTrigger]);
 
-  // Animate laser fade — runs only when there are active trails
+  // Animate laser fade - runs only when there are active trails
   useEffect(() => {
     if (laserTrails.length === 0) {
       if (laserAnimFrameRef.current) {
@@ -690,7 +690,7 @@ const [editingText, setEditingText] = React.useState('');
       ctx.setLineDash([]);
     }
 
-    // Laser trails (local + remote) — drawn last, on top
+    // Laser trails (local + remote) - drawn last, on top
     const now = Date.now();
     laserTrails.forEach((trail) => {
       const age = now - trail.timestamp;
