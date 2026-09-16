@@ -33,15 +33,15 @@ const App: React.FC = () => {
 
   // ── Canvas tool state ──────────────────────────────────
   const [activeTool, setActiveTool] = useState<Tool>('pencil');
-  const [activeColor, setActiveColor] = useState<string>('#6366f1');
-  const [backgroundColor, setBackgroundColor] = useState<string>(isDark ? '#0b0f17' : '#e8e9f0');
+  const [activeColor, setActiveColor] = useState<string>('#1f5c5a');
+  const [backgroundColor, setBackgroundColor] = useState<string>(isDark ? '#101012' : '#ecebe6');
   const [activeStrokeWidth, setActiveStrokeWidth] = useState<number>(5);
   const [laserStyle, setLaserStyle] = useState<'solid' | 'dashed' | 'dotted' | 'rough'>('solid');
   const [eraserSize, setEraserSize] = useState<number>(20);
 
   // Update canvas bg when theme switches (if it's still at the default)
   useEffect(() => {
-    setBackgroundColor(isDark ? '#0b0f17' : '#e8e9f0');
+    setBackgroundColor(isDark ? '#101012' : '#ecebe6');
   }, [isDark]);
 
   // Image upload

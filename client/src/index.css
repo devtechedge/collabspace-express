@@ -1,45 +1,45 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 /* ==========================================================
    DESIGN TOKENS - Light mode (default)
    ========================================================== */
 :root {
   /* Backgrounds */
-  --bg-app:          #f2f3f7;        /* warm off-white with a whisper of lavender */
-  --bg-sidebar:      #ffffff;
-  --bg-card:         #f8f8fc;
-  --bg-input:        #f0f0f6;
-  --bg-hover:        rgba(99, 102, 241, 0.06);
-  --bg-active:       rgba(99, 102, 241, 0.1);
-  --bg-badge:        #f0f0f6;
+  --bg-app:          #f3f2ee;
+  --bg-sidebar:      #fbfaf7;
+  --bg-card:         #f7f6f2;
+  --bg-input:        #ebeae4;
+  --bg-hover:        rgba(31, 92, 90, 0.08);
+  --bg-active:       rgba(31, 92, 90, 0.12);
+  --bg-badge:        #ebeae4;
 
   /* Canvas */
-  --canvas-bg:       #e8e9f0;
+  --canvas-bg:       #ecebe6;
 
   /* Text */
-  --text-primary:    #18181b;
-  --text-secondary:  #52525b;
-  --text-muted:      #a1a1aa;
+  --text-primary:    #171719;
+  --text-secondary:  #5c5c64;
+  --text-muted:      #8a8a93;
   --text-placeholder:#b4b4c2;
 
   /* Accents */
-  --accent-primary:  #6366f1;
-  --accent-hover:    #4f52e8;
-  --accent-soft:     rgba(99, 102, 241, 0.12);
-  --accent-glow:     rgba(99, 102, 241, 0.15);
-  --accent-secondary:#0ea5e9;
+  --accent-primary:  #1f5c5a;
+  --accent-hover:    #164e4c;
+  --accent-soft:     rgba(31, 92, 90, 0.12);
+  --accent-glow:     rgba(31, 92, 90, 0.16);
+  --accent-secondary:#185fa5;
 
   /* Borders */
   --border-color:    rgba(0, 0, 0, 0.07);
-  --border-hover:    rgba(99, 102, 241, 0.3);
-  --border-active:   rgba(99, 102, 241, 0.5);
+  --border-hover:    rgba(31, 92, 90, 0.35);
+  --border-active:   rgba(31, 92, 90, 0.5);
   --border-input:    rgba(0, 0, 0, 0.1);
 
   /* Shadows */
   --shadow-sm:       0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   --shadow-md:       0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
   --shadow-lg:       0 12px 32px rgba(0,0,0,0.10), 0 4px 8px rgba(0,0,0,0.04);
-  --shadow-sidebar:  4px 0 24px rgba(99, 102, 241, 0.06), 1px 0 0 rgba(0,0,0,0.05);
+  --shadow-sidebar:  4px 0 24px rgba(23, 23, 25, 0.06), 1px 0 0 rgba(0,0,0,0.05);
 
   /* Glass (light mode uses frosted white) */
   --glass-bg:        rgba(255, 255, 255, 0.75);
@@ -48,8 +48,8 @@
   --glass-dark-bg:   rgba(255, 255, 255, 0.85);
 
   /* Typography */
-  --font-sans:       'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-header:     'Outfit', sans-serif;
+  --font-sans:       'IBM Plex Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-header:     'IBM Plex Sans', sans-serif;
 
   /* Motion */
   --transition-smooth: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
@@ -63,30 +63,30 @@
    DARK MODE OVERRIDES
    ========================================================== */
 [data-theme="dark"] {
-  --bg-app:          #0b0f17;
-  --bg-sidebar:      rgba(13, 19, 34, 0.96);
+  --bg-app:          #0c0c0e;
+  --bg-sidebar:      #141416;
   --bg-card:         rgba(255, 255, 255, 0.03);
   --bg-input:        rgba(0, 0, 0, 0.25);
   --bg-hover:        rgba(255, 255, 255, 0.05);
-  --bg-active:       rgba(99, 102, 241, 0.15);
+  --bg-active:       rgba(216, 220, 228, 0.12);
   --bg-badge:        rgba(255, 255, 255, 0.06);
 
-  --canvas-bg:       #0b0f17;
+  --canvas-bg:       #101012;
 
-  --text-primary:    #f1f5f9;
+  --text-primary:    #f3f2ee;
   --text-secondary:  #94a3b8;
   --text-muted:      #475569;
   --text-placeholder:#475569;
 
-  --accent-primary:  #818cf8;
-  --accent-hover:    #a5b4fc;
-  --accent-soft:     rgba(129, 140, 248, 0.12);
-  --accent-glow:     rgba(99, 102, 241, 0.2);
-  --accent-secondary:#38bdf8;
+  --accent-primary:  #d8dce4;
+  --accent-hover:    #f3f2ee;
+  --accent-soft:     rgba(216, 220, 228, 0.14);
+  --accent-glow:     rgba(216, 220, 228, 0.16);
+  --accent-secondary:#7ab7ff;
 
   --border-color:    rgba(255, 255, 255, 0.07);
-  --border-hover:    rgba(129, 140, 248, 0.35);
-  --border-active:   rgba(129, 140, 248, 0.55);
+  --border-hover:    rgba(216, 220, 228, 0.35);
+  --border-active:   rgba(216, 220, 228, 0.5);
   --border-input:    rgba(255, 255, 255, 0.08);
 
   --shadow-sm:       0 1px 4px rgba(0,0,0,0.4);
@@ -175,12 +175,12 @@ h1, h2, h3, h4 {
   gap: 7px;
   transition: var(--transition-smooth);
   letter-spacing: 0.01em;
-  box-shadow: 0 1px 3px rgba(99,102,241,0.2), 0 4px 12px rgba(99,102,241,0.18);
+  box-shadow: 0 1px 3px rgba(31,92,90,0.2), 0 4px 12px rgba(31,92,90,0.16);
 }
 .btn-primary:hover {
   background: var(--accent-hover);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(99,102,241,0.3), 0 6px 18px rgba(99,102,241,0.22);
+  box-shadow: 0 2px 8px rgba(31,92,90,0.28), 0 6px 18px rgba(31,92,90,0.18);
 }
 .btn-primary:active { transform: translateY(0); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }

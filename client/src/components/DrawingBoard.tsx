@@ -65,16 +65,62 @@ const isNearLine = (x: number, y: number, x1: number, y1: number, x2: number, y2
   return Math.sqrt(dx * dx + dy * dy) < threshold;
 };
 
+const hitsEraser = (el: CanvasElement, p: Point, radius: number): boolean => {
+  const r = Math.max(radius, 8);
+  const minX = Math.min(el.x1, el.x2);
+  const maxX = Math.max(el.x1, el.x2);
+  const minY = Math.min(el.y1, el.y2);
+  const maxY = Math.max(el.y1, el.y2);
+  if (el.type === 'sticky-note' || el.type === 'image') {
+    const w = el.width ?? (maxX - minX);
+    const h = el.height ?? (maxY - minY);
+    const cx = Math.max(el.x1, Math.min(p.x, el.x1 + w));
+    const cy = Math.max(el.y1, Math.min(p.y, el.y1 + h));
+    return distance(p, { x: cx, y: cy }) <= r;
+  }
+  if (el.type === 'rectangle' || el.type === 'text') {
+    const cx = Math.max(minX, Math.min(p.x, maxX));
+    const cy = Math.max(minY, Math.min(p.y, maxY));
+    return distance(p, { x: cx, y: cy }) <= r;
+  }
+  if (el.type === 'circle') {
+    const cr = distance({ x: el.x1, y: el.y1 }, { x: el.x2, y: el.y2 });
+    return distance(p, { x: el.x1, y: el.y1 }) <= cr + r;
+  }
+  if (el.type === 'line') return isNearLine(p.x, p.y, el.x1, el.y1, el.x2, el.y2, r);
+  if (el.type === 'pencil' || el.type === 'highlighter') {
+    if (el.points) {
+      try {
+        const points: Point[] = JSON.parse(el.points);
+        const pad = r + (el.strokeWidth || 0) / 2;
+        for (let i = 0; i < points.length - 1; i++) {
+          if (isNearLine(p.x, p.y, points[i].x, points[i].y, points[i + 1].x, points[i + 1].y, pad)) return true;
+        }
+      } catch { /* ignore */ }
+    }
+    const cx = Math.max(minX, Math.min(p.x, maxX));
+    const cy = Math.max(minY, Math.min(p.y, maxY));
+    return distance(p, { x: cx, y: cy }) <= r;
+  }
+  return false;
+};
+
 const getElementAtPosition = (x: number, y: number, elements: CanvasElement[]): CanvasElement | null => {
   const sorted = [...elements].sort((a, b) => (b.zIndex ?? 0) - (a.zIndex ?? 0));
   for (const el of sorted) {
     switch (el.type) {
-      case 'rectangle': {
-        const minX = Math.min(el.x1, el.x2);
-        const maxX = Math.max(el.x1, el.x2);
-        const minY = Math.min(el.y1, el.y2);
-        const maxY = Math.max(el.y1, el.y2);
-        if (x >= minX - 4 && x <= maxX + 4 && y >= minY - 4 && y <= maxY + 4) return el;
+      case 'rectangle':
+      case 'text':
+      case 'sticky-note':
+      case 'image': {
+        const w = el.width ?? Math.abs(el.x2 - el.x1);
+        const h = el.height ?? Math.abs(el.y2 - el.y1);
+        const minX = el.type === 'sticky-note' || el.type === 'image' ? el.x1 : Math.min(el.x1, el.x2);
+        const minY = el.type === 'sticky-note' || el.type === 'image' ? el.y1 : Math.min(el.y1, el.y2);
+        const maxX = el.type === 'sticky-note' || el.type === 'image' ? el.x1 + w : Math.max(el.x1, el.x2);
+        const maxY = el.type === 'sticky-note' || el.type === 'image' ? el.y1 + h : Math.max(el.y1, el.y2);
+        const pad = el.type === 'sticky-note' || el.type === 'image' ? 2 : 4;
+        if (x >= minX - pad && x <= maxX + pad && y >= minY - pad && y <= maxY + pad) return el;
         break;
       }
       case 'circle': {
@@ -87,21 +133,14 @@ const getElementAtPosition = (x: number, y: number, elements: CanvasElement[]): 
         if (isNearLine(x, y, el.x1, el.y1, el.x2, el.y2)) return el;
         break;
       }
-      case 'pencil': {
+      case 'pencil':
+      case 'highlighter': {
         if (el.points) {
           const points: Point[] = JSON.parse(el.points);
           for (let j = 0; j < points.length - 1; j++) {
             if (isNearLine(x, y, points[j].x, points[j].y, points[j + 1].x, points[j + 1].y, 8)) return el;
           }
         }
-        break;
-      }
-      case 'text': {
-        const minX = Math.min(el.x1, el.x2);
-        const maxX = Math.max(el.x1, el.x2);
-        const minY = Math.min(el.y1, el.y2);
-        const maxY = Math.max(el.y1, el.y2);
-        if (x >= minX - 4 && x <= maxX + 4 && y >= minY - 4 && y <= maxY + 4) return el;
         break;
       }
     }
@@ -556,7 +595,7 @@ const [editingText, setEditingText] = React.useState('');
         }
         case 'text':
           if (el.text) {
-            ctx.font = '18px Inter, sans-serif';
+            ctx.font = '18px IBM Plex Sans, sans-serif';
             ctx.textBaseline = 'top';
             ctx.fillText(el.text, el.x1, el.y1);
           }
@@ -570,7 +609,7 @@ const [editingText, setEditingText] = React.useState('');
           // Text wrapping
           if (el.text) {
             ctx.fillStyle = '#000';
-            ctx.font = '16px Inter, sans-serif';
+            ctx.font = '16px IBM Plex Sans, sans-serif';
             const lineHeight = 18;
             const words = el.text.split(' ');
             let line = '';
@@ -811,24 +850,18 @@ const [editingText, setEditingText] = React.useState('');
   }
 
   if (tool === 'eraser') {
-  // Delete any element whose center is within eraserSize of the cursor
-  const elementsToDelete = elements.filter((el) => {
-    // Simple center calculation for most shapes
-    const centerX = (el.x1 + el.x2) / 2;
-    const centerY = (el.y1 + el.y2) / 2;
-    return distance({ x: coords.x, y: coords.y }, { x: centerX, y: centerY }) <= eraserSize;
-  });
-  if (elementsToDelete.length > 0) {
-    setUndoStack((prev) => [...prev, elements]);
-    const remaining = elements.filter((el) => !elementsToDelete.includes(el));
-    setElements(remaining);
-    // Emit delete for each removed element
-    elementsToDelete.forEach((el) => {
-      socketRef.current?.emit('delete-element', { boardId, elementId: el.id });
-    });
+    const elementsToDelete = elements.filter((el) => hitsEraser(el, coords, eraserSize));
+    if (elementsToDelete.length > 0) {
+      setUndoStack((prev) => [...prev, elements]);
+      const ids = new Set(elementsToDelete.map((el) => el.id));
+      setElements(elements.filter((el) => !ids.has(el.id)));
+      setSelectedElement((prev) => (prev && ids.has(prev.id) ? null : prev));
+      elementsToDelete.forEach((el) => {
+        socketRef.current?.emit('delete-element', { boardId, elementId: el.id });
+      });
+    }
+    return;
   }
-  return;
-}
 
 
   if (tool === 'highlighter') {
@@ -1030,11 +1063,16 @@ const [editingText, setEditingText] = React.useState('');
     const handleKeyDown = (e: KeyboardEvent) => {
       if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
 
-      if ((e.key === 'Delete' || e.key === 'Backspace') && tool === 'select' && selectedElement && boardId) {
-        setUndoStack((prev) => [...prev, elements]);
-        setElements((prev) => prev.filter((el) => el.id !== selectedElement.id));
-        socketRef.current?.emit('delete-element', { boardId, elementId: selectedElement.id });
-        setSelectedElement(null);
+      if ((e.key === 'Delete' || e.key === 'Backspace') && boardId) {
+        e.preventDefault();
+        const hover = getElementAtPosition(currentPoint.x, currentPoint.y, elements);
+        const target = selectedElement || hover || elements.at(-1);
+        if (target) {
+          setUndoStack((prev) => [...prev, elements]);
+          setElements((prev) => prev.filter((el) => el.id !== target.id));
+          socketRef.current?.emit('delete-element', { boardId, elementId: target.id });
+          setSelectedElement(null);
+        }
       }
 
       if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); handleUndo(); return; }
@@ -1102,7 +1140,7 @@ const [editingText, setEditingText] = React.useState('');
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
       let textWidth = 100;
-      if (ctx) { ctx.font = '18px Inter, sans-serif'; textWidth = ctx.measureText(trimmed).width; }
+      if (ctx) { ctx.font = '18px IBM Plex Sans, sans-serif'; textWidth = ctx.measureText(trimmed).width; }
       const maxZ = elements.length > 0 ? Math.max(...elements.map(e => e.zIndex ?? 0)) : 0;
       const textElement: CanvasElement = {
         id: textInput.id, type: 'text',
