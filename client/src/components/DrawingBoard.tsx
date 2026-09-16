@@ -1,8 +1,7 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { io } from 'socket.io-client';
-import type { Socket } from 'socket.io-client';
 import type { Tool, CanvasElement, Cursor, Point, GridStyle, LaserTrail } from '../types';
-import { getBackendUrl, upsertById } from '../lib/validation';
+import { upsertById } from '../lib/validation';
+import { connectCollab, type CollabConnection } from '../lib/collab-connection';
 import './DrawingBoard.css';
 
 // Props interface for DrawingBoard
@@ -183,7 +182,7 @@ export const DrawingBoard: React.FC<DrawingBoardProps> = ({
   onImagePlaced,
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<CollabConnection | null>(null);
 
   const [elements, setElements] = useState<CanvasElement[]>([]);
   const [undoStack, setUndoStack] = useState<CanvasElement[][]>([]);
@@ -239,8 +238,7 @@ const [editingText, setEditingText] = React.useState('');
     setLaserTrails([]);
     laserPointsRef.current = [];
 
-    const BACKEND_URL = getBackendUrl(import.meta.env.VITE_API_URL as string | undefined);
-    const socket = io(BACKEND_URL);
+    const socket = connectCollab();
     socketRef.current = socket;
 
     socket.emit('join-room', { boardId, userName });
@@ -412,18 +410,6 @@ const [editingText, setEditingText] = React.useState('');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     
-    // Fetch initial background color from API
-    if (boardId) {
-      fetch(`${getBackendUrl(import.meta.env.VITE_API_URL as string | undefined)}/api/boards/${boardId}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.backgroundColor) {
-            onBackgroundColorChange(data.backgroundColor);
-          }
-        })
-        .catch(err => console.error('Error fetching board styling details:', err));
-    }
-
     drawCanvas();
 
     const handleResize = () => {

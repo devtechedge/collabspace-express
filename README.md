@@ -18,7 +18,7 @@ Real-time multiplayer whiteboard - infinite canvas, live cursors, and Prisma-bac
 
 **https://collabspace-express.vercel.app**
 
-> **Status:** Vercel hosts the **Vite client**. There is no public Express/Socket.io process on that URL. When the API is unreachable the client falls back to **localStorage boards** so the live demo is still drawable. Clone and `npm run dev` for real multiplayer (two browser windows on the same room ID).
+> **Status:** Vercel hosts the Vite client. Live multiplayer is always-on via a hosted Postgres + Realtime backend — rooms, strokes, cursors, and presence sync as soon as the site loads. Share a room ID (`?room=`) with another browser to collaborate.
 >
 > This is not a production auth or payment product. Identity is an anonymous display name in `localStorage`.
 
@@ -60,8 +60,8 @@ Real-time multiplayer whiteboard - infinite canvas, live cursors, and Prisma-bac
 | Frontend | React 19, Vite 8, TypeScript, HTML5 Canvas, Lucide |
 | Realtime | Socket.io 4 |
 | API | Express 4 |
-| Data | Prisma 5 + SQLite (swap the provider for Postgres locally) |
-| Hosting | Vercel (client). Express is **local** |
+| Data | Prisma 5 + SQLite locally; hosted Postgres + Realtime for the public demo |
+| Hosting | Vercel (client) + always-on cloud backend for live multiplayer |
 | CI | GitHub Actions |
 
 ---

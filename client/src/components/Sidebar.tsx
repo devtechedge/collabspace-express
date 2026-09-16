@@ -4,7 +4,8 @@ import {
   Plus, Users, Copy, Check, Hash, Trash2, Pencil,
   Sun, Moon, LogIn, Shield, Keyboard,
 } from 'lucide-react';
-import { getBackendUrl, isValidBoardId, isValidBoardName, normalizeBoardName } from '../lib/validation';
+import { isValidBoardId, isValidBoardName, normalizeBoardName } from '../lib/validation';
+import { createBoard, deleteBoard, listBoards, renameBoard } from '../lib/boards-api';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -93,15 +94,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [offline, setOffline] = useState(false);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
 
-  const BACKEND_URL = getBackendUrl(import.meta.env.VITE_API_URL as string | undefined);
-  const API_URL = `${BACKEND_URL}/api/boards`;
-
   const fetchBoards = async () => {
     try {
-      const res = await fetch(API_URL);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      if (!Array.isArray(data)) throw new Error('unexpected payload');
+      const data = await listBoards();
       setBoards(data);
       setOffline(false);
     } catch (err) {
@@ -145,19 +140,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
 
     try {
-      const res = await fetch(API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
+      const data = await createBoard(name);
       setNewBoardName('');
       fetchBoards();
       if (data?.id) onSelectBoard(data.id);
     } catch (err) {
       console.error('Error creating board:', err);
-      setCreateError('Failed to create. Is the server running?');
+      setCreateError('Failed to create board. Check your connection.');
       setOffline(true);
     } finally {
       setIsCreating(false);
@@ -182,8 +171,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
 
     try {
-      const res = await fetch(`${API_URL}/${boardId}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      await deleteBoard(boardId);
       setConfirmDeleteId(null);
       fetchBoards();
       if (currentBoardId === boardId) {
@@ -220,11 +208,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
 
     try {
-      await fetch(`${API_URL}/${boardId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
+      await renameBoard(boardId, name);
       setBoards((prev) => prev.map((b) => (b.id === boardId ? { ...b, name } : b)));
     } catch (err) {
       console.error('Error renaming board:', err);
@@ -301,7 +285,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {offline && (
           <div className="sidebar-section" data-testid="offline-banner">
             <span className="error-text">
-              Backend unreachable - boards in this browser only. Run the Express server for live multiplayer.
+              Live sync is reconnecting. New boards stay in this browser until the cloud is back.
             </span>
           </div>
         )}

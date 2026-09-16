@@ -93,6 +93,9 @@ export type SanitizedElement = {
   text: string | undefined;
   filled: boolean;
   zIndex: number;
+  src?: string;
+  width?: number;
+  height?: number;
 };
 
 export function sanitizeElement(raw: unknown): SanitizedElement | null {
@@ -108,7 +111,7 @@ export function sanitizeElement(raw: unknown): SanitizedElement | null {
   const points = typeof el.points === 'string' ? el.points.slice(0, POINTS_JSON_MAX) : '';
   const strokeStyle = isStrokeStyle(el.strokeStyle) ? el.strokeStyle : 'solid';
 
-  return {
+  const sanitized: SanitizedElement = {
     id: el.id,
     type: el.type as (typeof ELEMENT_TYPES)[number],
     x1: el.x1,
@@ -123,6 +126,10 @@ export function sanitizeElement(raw: unknown): SanitizedElement | null {
     filled: Boolean(el.filled),
     zIndex: isFiniteNumber(el.zIndex) ? Math.trunc(el.zIndex) : 0,
   };
+  if (typeof el.src === 'string') sanitized.src = el.src;
+  if (isFiniteNumber(el.width)) sanitized.width = el.width;
+  if (isFiniteNumber(el.height)) sanitized.height = el.height;
+  return sanitized;
 }
 
 export function upsertById<T extends { id: string }>(list: T[], item: T): T[] {
