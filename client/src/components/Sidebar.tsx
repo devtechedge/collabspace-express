@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import type { Board } from '../types';
 import {
   Plus, Users, Copy, Check, Hash, Trash2, Pencil,
-  Sun, Moon, LogIn, Shield,
+  Sun, Moon, LogIn, Shield, Keyboard,
 } from 'lucide-react';
 import { getBackendUrl, isValidBoardId, isValidBoardName, normalizeBoardName } from '../lib/validation';
 import './Sidebar.css';
@@ -15,6 +15,7 @@ interface SidebarProps {
   activeUsers: { socketId: string; userName: string; color: string }[];
   isDark: boolean;
   onToggleTheme: () => void;
+  onOpenShortcuts?: () => void;
 }
 
 const LOCAL_BOARDS_KEY = 'collabspace_local_boards';
@@ -77,6 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeUsers,
   isDark,
   onToggleTheme,
+  onOpenShortcuts,
 }) => {
   const [boards, setBoards] = useState<Board[]>([]);
   const [newBoardName, setNewBoardName] = useState('');
@@ -255,6 +257,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <span className="sidebar-title">CollabSpace</span>
         </div>
         <div className="sidebar-header-actions">
+          <button
+            className="theme-toggle-btn"
+            onClick={onOpenShortcuts}
+            title="Keyboard shortcuts (?)"
+            aria-label="Keyboard shortcuts"
+            data-testid="shortcuts-button-sidebar"
+            type="button"
+          >
+            <Keyboard size={15} />
+          </button>
           <button
             className="theme-toggle-btn"
             onClick={onToggleTheme}

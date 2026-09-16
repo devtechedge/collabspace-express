@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Keyboard } from 'lucide-react';
 import { Sidebar } from './components/Sidebar';
 import { Toolbar } from './components/Toolbar';
 import { DrawingBoard } from './components/DrawingBoard';
+import { ShortcutsDialog } from './components/ShortcutsDialog';
 import type { Tool, GridStyle } from './types';
+import './components/ShortcutsDialog.css';
 
 const App: React.FC = () => {
   // ── Theme ──────────────────────────────────────────────
@@ -72,6 +75,7 @@ const App: React.FC = () => {
 
   // Collaborators
   const [activeUsers, setActiveUsers] = useState<{ socketId: string; userName: string; color: string }[]>([]);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   const handleUserNameChange = (name: string) => {
     setUserName(name);
@@ -90,6 +94,19 @@ const App: React.FC = () => {
     const params = new URLSearchParams(window.location.search);
     const room = params.get('room');
     if (room) setCurrentBoardId(room);
+  }, []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const typing = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA';
+      if (typing) return;
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault();
+        setShortcutsOpen((open) => !open);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   return (
@@ -113,10 +130,21 @@ const App: React.FC = () => {
         activeUsers={activeUsers}
         isDark={isDark}
         onToggleTheme={toggleTheme}
+        onOpenShortcuts={() => setShortcutsOpen(true)}
       />
 
       {/* Canvas area */}
       <div style={{ flex: 1, position: 'relative', height: '100vh', overflow: 'hidden' }}>
+        <button
+          type="button"
+          className="shortcuts-fab"
+          aria-label="Keyboard shortcuts"
+          title="Keyboard shortcuts (?)"
+          data-testid="shortcuts-button"
+          onClick={() => setShortcutsOpen(true)}
+        >
+          <Keyboard size={18} />
+        </button>
         {currentBoardId && (
           <Toolbar
             activeTool={activeTool}
@@ -175,6 +203,7 @@ const App: React.FC = () => {
           onImagePlaced={() => setPendingImageSrc(null)}
         />
       </div>
+      <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
     </div>
   );
 };

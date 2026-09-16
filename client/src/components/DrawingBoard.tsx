@@ -1147,12 +1147,33 @@ const [editingText, setEditingText] = React.useState('');
         switch (e.key.toLowerCase()) {
           case 'v': onChangeTool('select'); break;
           case 'p': onChangeTool('pencil'); break;
+          case 'h': onChangeTool('highlighter'); break;
           case 'e': onChangeTool('eraser'); break;
           case 'l': onChangeTool('line'); break;
           case 'r': onChangeTool('rectangle'); break;
           case 'o': onChangeTool('circle'); break;
           case 't': onChangeTool('text'); break;
+          case 'n': onChangeTool('sticky-note'); break;
           case 'z': onChangeTool('laser'); break;
+          case 'i': onChangeTool('image'); break;
+          case ']':
+            if (selectedElement) {
+              const maxZ = Math.max(0, ...elements.map((el) => el.zIndex ?? 0));
+              const updated = { ...selectedElement, zIndex: maxZ + 1 };
+              setElements((prev) => prev.map((el) => (el.id === selectedElement.id ? updated : el)));
+              setSelectedElement(updated);
+              socketRef.current?.emit('draw-element', { boardId, element: updated });
+            }
+            break;
+          case '[':
+            if (selectedElement) {
+              const minZ = Math.min(0, ...elements.map((el) => el.zIndex ?? 0));
+              const updated = { ...selectedElement, zIndex: minZ - 1 };
+              setElements((prev) => prev.map((el) => (el.id === selectedElement.id ? updated : el)));
+              setSelectedElement(updated);
+              socketRef.current?.emit('draw-element', { boardId, element: updated });
+            }
+            break;
         }
       }
     };
