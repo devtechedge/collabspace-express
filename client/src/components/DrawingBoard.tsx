@@ -197,6 +197,10 @@ export const DrawingBoard: React.FC<DrawingBoardProps> = ({
   // Pan & Zoom
   const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState<number>(1);
+  const panRef = useRef(pan);
+  const zoomRef = useRef(zoom);
+  panRef.current = pan;
+  zoomRef.current = zoom;
 
   // Text Tool
   const [textInput, setTextInput] = useState<{ x: number; y: number; text: string; id: string } | null>(null);
@@ -1061,7 +1065,23 @@ const [editingText, setEditingText] = React.useState('');
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
+      const typing = document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA';
+      if ((e.ctrlKey || e.metaKey) && (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd')) {
+        e.preventDefault();
+        if (!typing) setZoom((z) => Math.min(6, z * 1.15));
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === '-' || e.code === 'NumpadSubtract')) {
+        e.preventDefault();
+        if (!typing) setZoom((z) => Math.max(0.2, z / 1.15));
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === '0' || e.code === 'Numpad0')) {
+        e.preventDefault();
+        if (!typing) { setZoom(1); setPan({ x: 0, y: 0 }); }
+        return;
+      }
+      if (typing) return;
 
       if ((e.key === 'Delete' || e.key === 'Backspace') && boardId) {
         e.preventDefault();
@@ -1156,23 +1176,40 @@ const [editingText, setEditingText] = React.useState('');
     setTextInput(null);
   };
 
-  const handleZoom = (e: React.WheelEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
-    const zoomFactor = 1.1;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const currentZoom = zoom;
-    let nextZoom = currentZoom;
-    if (e.deltaY < 0) nextZoom = Math.min(currentZoom * zoomFactor, 6);
-    else nextZoom = Math.max(currentZoom / zoomFactor, 0.2);
-    const dx = mouseX - pan.x;
-    const dy = mouseY - pan.y;
-    setZoom(nextZoom);
-    setPan({ x: mouseX - dx * (nextZoom / currentZoom), y: mouseY - dy * (nextZoom / currentZoom) });
-  };
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      const canvas = canvasRef.current;
+      const target = e.target as Node | null;
+      const overCanvas = !!(canvas && target && (canvas === target || canvas.contains(target) || canvas.parentElement?.contains(target)));
+      const isPinchOrCtrlZoom = e.ctrlKey || e.metaKey;
+      if (!isPinchOrCtrlZoom && !overCanvas) return;
+      e.preventDefault();
+      if (!canvas) return;
+      const currentZoom = zoomRef.current;
+      const pixelDelta = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaMode === 2 ? e.deltaY * window.innerHeight : e.deltaY;
+      const nextZoom = Math.min(6, Math.max(0.2, currentZoom * Math.exp(-pixelDelta * 0.002)));
+      if (Math.abs(nextZoom - currentZoom) < 0.0001) return;
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+      setZoom(nextZoom);
+      setPan({
+        x: mouseX - (mouseX - panRef.current.x) * (nextZoom / currentZoom),
+        y: mouseY - (mouseY - panRef.current.y) * (nextZoom / currentZoom),
+      });
+    };
+    const blockGesture = (ev: Event) => ev.preventDefault();
+    window.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    document.addEventListener('gesturestart', blockGesture, { passive: false });
+    document.addEventListener('gesturechange', blockGesture, { passive: false });
+    document.addEventListener('gestureend', blockGesture, { passive: false });
+    return () => {
+      window.removeEventListener('wheel', onWheel, { capture: true });
+      document.removeEventListener('gesturestart', blockGesture);
+      document.removeEventListener('gesturechange', blockGesture);
+      document.removeEventListener('gestureend', blockGesture);
+    };
+  }, []);
 
   const exportCanvasImage = () => {
     const canvas = canvasRef.current;
@@ -1255,7 +1292,7 @@ const [editingText, setEditingText] = React.useState('');
   };
 
   return (
-    <div className="drawing-board-container" data-testid="drawing-board">
+    <div className="drawing-board-container" data-testid="drawing-board" style={{ touchAction: 'none' }}>
       {boardId ? (
         <>
           <canvas
@@ -1266,7 +1303,6 @@ const [editingText, setEditingText] = React.useState('');
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onDoubleClick={handleCanvasDoubleClick}
-              onWheel={handleZoom}
             />
 
           {textInput && (

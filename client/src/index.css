@@ -113,6 +113,10 @@ html {
   font-size: 15px;
 }
 
+html, body {
+  overscroll-behavior: none;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--bg-app);

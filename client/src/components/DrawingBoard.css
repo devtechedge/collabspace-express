@@ -8,6 +8,8 @@
   height: 100vh;
   background-color: var(--canvas-bg);
   overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
   user-select: none;
   -webkit-user-select: none;
   transition: background-color 0.25s ease;
@@ -19,6 +21,7 @@
   top: 0;
   left: 0;
   display: block;
+  touch-action: none;
   cursor: crosshair;
 }
 .canvas-element.select-tool  { cursor: default; }
