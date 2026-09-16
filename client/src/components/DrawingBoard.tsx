@@ -605,11 +605,18 @@ const [editingText, setEditingText] = React.useState('');
           }
           break;
         case 'sticky-note': {
-          // Background rectangle
-          const w = el.width ?? (el.x2 - el.x1);
-          const h = el.height ?? (el.y2 - el.y1);
-          ctx.fillStyle = el.color || '#fff9b0';
+          const w = Math.abs(el.width ?? (el.x2 - el.x1)) || 180;
+          const h = Math.abs(el.height ?? (el.y2 - el.y1)) || 140;
+          ctx.save();
+          ctx.shadowColor = 'rgba(23,23,25,0.18)';
+          ctx.shadowBlur = 10;
+          ctx.shadowOffsetY = 3;
+          ctx.fillStyle = el.color || '#f5d76e';
           ctx.fillRect(el.x1, el.y1, w, h);
+          ctx.restore();
+          ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(el.x1, el.y1, w, h);
           // Text wrapping
           if (el.text) {
             ctx.fillStyle = '#000';
@@ -786,17 +793,20 @@ const [editingText, setEditingText] = React.useState('');
     // 'none' = no grid
   };
 
-  const getCanvasCoords = (e: React.MouseEvent<HTMLCanvasElement>): Point => {
+  const getCanvasCoords = (e: { clientX: number; clientY: number }): Point => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left - pan.x) / zoom;
-    const y = (e.clientY - rect.top - pan.y) / zoom;
+    const x = (e.clientX - rect.left - panRef.current.x) / zoomRef.current;
+    const y = (e.clientY - rect.top - panRef.current.y) / zoomRef.current;
     return { x, y };
   };
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleMouseDown = (e: React.PointerEvent<HTMLCanvasElement>) => {
   if (!boardId) return;
+  if ('pointerId' in e) {
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* ignore */ }
+  }
 
   if (textInput && e.button !== 2) {
     finalizeTextInput();
@@ -814,6 +824,37 @@ const [editingText, setEditingText] = React.useState('');
 
   if (tool === 'laser') {
     laserPointsRef.current = [coords];
+      return;
+    }
+
+    if (tool === 'sticky-note') {
+      const w = 180;
+      const h = 140;
+      const paper = '#f5d76e';
+      const maxZ = elements.reduce((z, el) => Math.max(z, el.zIndex ?? 0), 0);
+      const note: CanvasElement = {
+        id: generateId(),
+        type: 'sticky-note',
+        x1: coords.x,
+        y1: coords.y,
+        x2: coords.x + w,
+        y2: coords.y + h,
+        width: w,
+        height: h,
+        color: paper,
+        strokeWidth: 1,
+        text: '',
+        zIndex: maxZ + 1,
+      };
+      setUndoStack((prev) => [...prev, elements]);
+      setElements((prev) => [...prev, note]);
+      setSelectedElement(note);
+      setAction('none');
+      socketRef.current?.emit('draw-element', { boardId, element: note });
+      onUndoStateChange(true, false);
+      setEditingNote(note);
+      setEditingText('');
+      setTimeout(() => editTextareaRef.current?.focus(), 0);
       return;
     }
 
@@ -914,7 +955,7 @@ const [editingText, setEditingText] = React.useState('');
   }
 };
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const handleMouseMove = (e: React.PointerEvent<HTMLCanvasElement> | React.MouseEvent<HTMLCanvasElement>) => {
     const coords = getCanvasCoords(e);
     setCurrentPoint(coords);
 
@@ -1000,6 +1041,10 @@ const [editingText, setEditingText] = React.useState('');
 
   const handleMouseUp = () => {
     if (!boardId) return;
+    if (tool === 'sticky-note') {
+      setAction('none');
+      return;
+    }
 
     // Stop laser emission, let fade animation run
     if (tool === 'laser') return;
@@ -1299,9 +1344,10 @@ const [editingText, setEditingText] = React.useState('');
               ref={canvasRef}
               data-testid="drawing-canvas"
               className={`canvas-element ${tool === 'select' ? 'select-tool' : ''} ${action === 'panning' ? 'pan-tool' : ''} ${tool === 'laser' ? 'laser-tool' : ''}`}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
+              onPointerDown={handleMouseDown}
+              onPointerMove={handleMouseMove}
+              onPointerUp={handleMouseUp}
+              onPointerCancel={handleMouseUp}
               onDoubleClick={handleCanvasDoubleClick}
             />
 
