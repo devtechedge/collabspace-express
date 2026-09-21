@@ -111,6 +111,7 @@
   z-index: 40;
   width: 40px;
   height: 40px;
+  max-width: calc(100vw - 32px);
   border-radius: 12px;
   border: 1px solid var(--border-color);
   background: var(--glass-bg);
@@ -125,4 +126,13 @@
 .shortcuts-fab:hover {
   color: var(--accent-primary);
   border-color: var(--border-hover);
+}
+
+
+/* fab mobile */
+@media (max-width: 640px) {
+  .shortcuts-fab {
+    top: 10px;
+    right: 10px;
+  }
 }

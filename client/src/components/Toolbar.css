@@ -440,3 +440,20 @@
   letter-spacing: 0.01em;
 }
 .apply-grad-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+
+/* Responsive toolbar containment — keep vertical rail inside viewport */
+@media (max-width: 640px) {
+  .toolbar-wrapper {
+    left: 8px;
+    max-width: calc(100vw - 16px);
+  }
+  .toolbar-container {
+    max-height: calc(100vh - 96px);
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .color-menu-panel {
+    max-width: min(228px, calc(100vw - 56px));
+  }
+}
