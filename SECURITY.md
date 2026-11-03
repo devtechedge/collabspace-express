@@ -1,7 +1,7 @@
 # Security Assessment - CollabSpace Express
 
-**Date:** 2026-09-06  
-**Scope:** Auth, XSS, injection, CORS, Socket.io, secrets, persistence  
+**Date:** 2026-09-06 (Supabase RLS update: 2026-10-22)
+**Scope:** Auth, XSS, injection, CORS, Socket.io, Supabase RLS, secrets, persistence
 **Context:** Public deploy is the **Vite client on Vercel**. Express + Socket.io + Prisma/SQLite is the **local production path**, not exposed on the live alias.
 
 ---
@@ -11,15 +11,15 @@
 | Area | Risk | Notes |
 |------|------|--------|
 | Authentication | **N/A (by design)** | Anonymous display name in `localStorage`. No login, no JWT, no NextAuth. |
-| Authorization | **High if the engine is public** | Any Socket.io client that knows a board UUID can draw, delete, or clear it. |
+| Authorization | **Medium** | Boards are public read/edit by design; board delete requires the creator's local token; direct anon board DELETE is revoked. |
 | XSS | **Low** | No `dangerouslySetInnerHTML`. React text escaping for names and board titles. |
 | Injection (SQL) | **Low locally** | Prisma parameterized queries. REST/socket payloads are allow-listed. |
 | CORS | **Medium (local engine)** | `CORS_ORIGIN` env, default `*` for local DX - unsafe for a public bind. |
-| Secrets in repo | **Low** | `.env` gitignored; `.env.example` has no credentials. Session PowerShell junk removed. |
+| Secrets in repo | **Low** | Supabase anon key is public by design; service-role key never ships in the client. `.env` gitignored; `.env.example` has no live credentials. |
 | Rate limiting | **None** | Accepted residual risk for the portfolio demo. |
 | Payments | **N/A** | No payments, no PII store. |
 
-**Overall (public Vercel demo):** Low residual risk - static client, no backend secrets, no auth boundary to break. Offline boards stay in `localStorage`.
+**Overall (public Vercel demo):** Low residual risk - public anon key, RLS enforced, no service-role key in the client. Offline boards stay in `localStorage`.
 
 **Overall (if Express is bound to the internet):** High - unauthenticated Socket.io mutations on any room id.
 
@@ -43,6 +43,13 @@
 - Socket events (`draw-element`, `delete-element`, `clear-board`) mutate the room for anyone who joined.
 
 **Accepted for local/portfolio use.** Not accepted for a public multi-tenant whiteboard.
+
+**Supabase RLS (public Vercel demo):**
+- `collabspace_boards` and `collabspace_elements` have RLS enabled. The old permissive `FOR ALL USING (true)` policies are gone.
+- Boards allow public `SELECT`, `INSERT`, and `UPDATE`; `DELETE` is revoked from `anon`/`authenticated`.
+- Board deletion goes through `delete_collabspace_board(id, token)`. The token is created with the board and kept only in the creator's `localStorage`; the token table has RLS enabled and no public policies.
+- Elements keep public `SELECT`/`INSERT`/`UPDATE`/`DELETE` so live drawing, erasing, and clearing still work.
+- The anon key is public by design; it is no longer hardcoded in the client. Vercel supplies `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` at build time.
 
 ---
 
@@ -81,6 +88,7 @@ SQL stays on the Prisma client. Do not interpolate user input into raw SQL if th
 - `.gitignore` excludes `.env`, `*.db`, Playwright reports, coverage.
 - `.env.example` documents `PORT`, `CORS_ORIGIN`, `VITE_API_URL` - no live secrets.
 - Root PowerShell PAT/OAuth helpers were deleted; they read `GITHUB_PERSONAL_ACCESS_TOKEN` from the environment and never committed a token.
+- The Supabase anon key is a public client credential, not a server secret. The service-role key is not in the client or repo. RLS is the access boundary.
 
 ---
 
@@ -109,7 +117,7 @@ Hello-world placeholder APIs: none.
 
 **Not accepted if this is a public realtime service**
 - Open Socket.io mutations.
-- Unauthenticated REST deletes.
+- Public element edits/deletes (anyone with the anon key can erase drawings).
 - `CORS_ORIGIN=*` on a public host.
 
 ---

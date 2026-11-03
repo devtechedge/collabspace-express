@@ -1,11 +1,19 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
-const URL =
-  (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim() ||
-  'https://dphiogjvekiwnixzdhuo.supabase.co';
-const KEY =
-  (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() ||
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwaGlvZ2p2ZWtpd25peHpkaHVvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MTY1OTgsImV4cCI6MjA5NzI5MjU5OH0.3os7eRw0E97mTzwrTa_8Z4LypmPPZMgXL7XXIvjV-lQ';
+function requiredEnv(name: string, value: string | undefined): string {
+  const trimmed = value?.trim();
+  if (!trimmed) throw new Error(`${name} must be set.`);
+  return trimmed;
+}
+
+const URL = requiredEnv(
+  'VITE_SUPABASE_URL',
+  import.meta.env.VITE_SUPABASE_URL as string | undefined,
+);
+const KEY = requiredEnv(
+  'VITE_SUPABASE_ANON_KEY',
+  import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined,
+);
 
 let client: SupabaseClient | null = null;
 

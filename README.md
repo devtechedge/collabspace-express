@@ -126,7 +126,7 @@ npm run test:e2e
 
 ## Security
 
-Portfolio demo: **no login**. Vercel cannot reach other users' boards.
+Portfolio demo: **no login**. Boards are public collaboration spaces: anyone with the public anon key can read and edit them, but only the browser that created a board can delete it. The anon key is public by design; row-level security is the boundary.
 
 The local Express engine allow-lists element types, clamps strokes, caps payload size, and reads `CORS_ORIGIN`. **Do not bind port 5000 to the internet** without auth and a locked origin.
 
